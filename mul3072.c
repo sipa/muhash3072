@@ -150,14 +150,20 @@ static void sqr3072(struct num3072* out, const struct num3072* a) {
     struct num3072 tmp;
 
     /* Compute limbs 0..47 of a*a into tmp, including one reduction. */
-    for (int j = 0; j < 48; ++j) {
+    for (int j = 0; j < 47; ++j) {
         uint64_t d0 = 0, d1 = 0, d2 = 0, c2 = 0;
         for (int i = 0; i < (47 - j) / 2; ++i) muladd2(d0, d1, d2, a->d[i + j + 1], a->d[47 - i]);
         if ((47 - j) & 1) muladd(d0, d1, d2, a->d[(47 - j) / 2 + j + 1], a->d[47 - (47 - j)/2]);
         muladdn(c0, c1, c2, d0, d1, d2, 1103717);
         for (int i = 0; i < (j + 1) / 2; ++i) muladd2(c0, c1, c2, a->d[i], a->d[j - i]);
-        if ((j + 1) & 1) muladd(c0, c1, c2, a->d[(j + 1) / 2 + 1], a->d[j - (j + 1) / 2 - 1]);
+        if ((j + 1) & 1) muladd(c0, c1, c2, a->d[(j + 1) / 2], a->d[j - (j + 1) / 2]);
         extract(c0, c1, c2, tmp.d[j]);
+    }
+    /* Compute limb 47 of a*b into tmp (unaffected by the first reduction). */
+    {
+        uint64_t c2 = 0;
+        for (int i = 0; i < 24; ++i) muladd2(c0, c1, c2, a->d[i], a->d[47 - i]);
+        extract(c0, c1, c2, tmp.d[47]);
     }
     /* Perform a second reduction. */
     muln_fast(c0, c1, 1103717);
