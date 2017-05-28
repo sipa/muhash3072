@@ -221,19 +221,16 @@ void inv3072(struct num3072* out, const struct num3072* a) {
 }
 
 int main(void) {
-    unsigned char ab[384], bb[384], cb[384];
-//    FILE* f = fopen("/dev/urandom", "r");
-//    fread(ab, 384, 1, f);
-//    fread(bb, 384, 1, f);
-//    fclose(f);
-    memset(ab, 0xaa, 384);
-    memset(bb, 0xbb, 384);
-    memset(cb, 0xcc, 384);
+    unsigned char ab[384], bb[384];
+    FILE* f = fopen("/dev/urandom", "r");
+    fread(ab, 384, 1, f);
+    fread(bb, 384, 1, f);
+    fclose(f);
 
-    struct num3072 an, bn, cn;
+/*
+    struct num3072 an, bn;
     memcpy(&an, ab, 384);
     memcpy(&bn, bb, 384);
-    memcpy(&cn, cb, 384);
     printf("begin: ");
     for (int i = 0; i < 48; ++i) {
         printf("%016lx", (unsigned long)an.d[47 - i]);
@@ -249,8 +246,8 @@ int main(void) {
         printf("%016lx", (unsigned long)an.d[47 - i]);
     }
     printf("\n");
+*/
 
-/*
     mpz_t ag, bg, t, m;
     mpz_init(ag);
     mpz_init(bg);
@@ -263,15 +260,15 @@ int main(void) {
     mpz_import(bg, 384, -1, 1, -1, 0, bb);
     gmp_printf("begin: %Zx\n", ag);
     for (int i = 0; i < 1000000; ++i) {
-        mpz_tdiv_q_2exp(ag, t, 3072);
+/*        mpz_tdiv_q_2exp(ag, t, 3072);
         mpz_tdiv_r_2exp(t, t, 3072);
         mpz_addmul_ui(t, ag, 1103717);
         mpz_tdiv_r_2exp(ag, t, 3072);
         mpz_tdiv_q_2exp(t, t, 3072);
-        mpz_addmul_ui(ag, t, 1103717);
+        mpz_addmul_ui(ag, t, 1103717);*/
+        mpz_invert(ag, ag, m);
     }
     gmp_printf("end: %Zx\n", ag);
-*/
 
     return 0;
 }
