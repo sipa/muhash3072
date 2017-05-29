@@ -26,37 +26,47 @@ int main(int argc, char** argv) {
     mpz_init(p);
     for (int bits = 0; bits <= MAXTERMS; ++bits) {
         int cnt = 0;
-        for (int val = 0; val < (1 << MAXTERMS); ++val) {
+        for (int val = 1; val < (1ULL << MAXTERMS); val += 2) {
             if (__builtin_popcount(val) != bits) continue;
-            uint64_t hash = ((uint64_t)val) * 0x123456789ABCDEFULL;
-            hash = (hash >> 32) | (hash << 32);
-            hash *= 0x123456789ABCDEFULL;
-            hash = (hash >> 32) | (hash << 32);
-            hash *= 0x123456789ABCDEFULL;
-            if ((hash % total) != num) continue;
-            ++cnt;
-            pow2(n, BITS);
-            pow2(p, BITS - 1);
-            mpz_sub_ui(n, n, 1);
-            mpz_sub_ui(p, p, 1);
-            for (int bit = 0; bit < MAXTERMS; ++bit) {
-                if ((val >> bit) & 1) {
-                    pow2(m, (bit + 1) * SPACING - 1);
-                    mpz_sub(p, p, m);
-                    mpz_mul_2exp(m, m, 1);
-                    mpz_sub(n, n, m);
-                }
-            }
-            if (mpz_probab_prime_p(p, 1) && mpz_probab_prime_p(n, 15) && mpz_probab_prime_p(p, 15)) {
-                printf("2^%i", BITS);
-                for (int bit = MAXTERMS - 1; bit >= 0; --bit) {
+            for (int sign = 0; sign <= val ; ++sign) {
+                if (sign & ~val) continue;
+                if (__builtin_clz(sign) != __builtin_clz(val)) continue;
+                uint64_t hash = ((uint64_t)val) * 0x123456789ABCDEFULL ^ sign;
+                hash = (hash >> 32) | (hash << 32);
+                hash *= 0x123456789ABCDEFULL;
+                hash = (hash >> 32) | (hash << 32);
+                hash *= 0x123456789ABCDEFULL;
+                if ((hash % total) != num) continue;
+                ++cnt;
+                pow2(n, BITS);
+                mpz_sub_ui(n, n, 1);
+                for (int bit = 0; bit < MAXTERMS; ++bit) {
                     if ((val >> bit) & 1) {
-                        printf(" - 2^%i", (bit + 1) * SPACING);
+                        pow2(m, bit * SPACING);
+                        if ((sign >> bit) & 1) {
+                            mpz_sub(n, n, m);
+                        } else {
+                            mpz_add(n, n, m);
+                        }
                     }
                 }
-                printf(" - 1\n");
+                mpz_fdiv_q_2exp(p, n, 1);
+                if (mpz_probab_prime_p(p, 1) && mpz_probab_prime_p(n, 15) && mpz_probab_prime_p(p, 15)) {
+                    printf("2^%i", BITS);
+                    for (int bit = MAXTERMS; bit >= 0; --bit) {
+                        if ((val >> bit) & 1) {
+                            if (bit) {
+                                printf(" %c 2^%i", (sign >> bit) & 1 ? '-' : '+', bit * SPACING);
+                            } else {
+                                printf(" %c 1", (sign >> bit) & 1 ? '-' : '+');
+                            }
+                        }
+                    }
+                    printf("\n");
+                }
             }
         }
+        printf("* %i bits: %i attempts\n", bits, cnt);
     }
 
     return 0;
