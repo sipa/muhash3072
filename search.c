@@ -5,9 +5,9 @@
 #include <assert.h>
 #include <gmp.h>
 
-#define BITS 3072
-#define SPACING 64
-#define MAXTERMS 23
+#define BITS 256
+#define SPACING 16
+#define MAXTERMS 30
 
 void pow2(mpz_t out, int n) {
     mpz_set_ui(out, 1);
@@ -39,7 +39,6 @@ int main(int argc, char** argv) {
                 if ((hash % total) != num) continue;
                 ++cnt;
                 pow2(n, BITS);
-                mpz_sub_ui(n, n, 1);
                 for (int bit = 0; bit < MAXTERMS; ++bit) {
                     if ((val >> bit) & 1) {
                         pow2(m, bit * SPACING);
@@ -50,7 +49,8 @@ int main(int argc, char** argv) {
                         }
                     }
                 }
-                mpz_fdiv_q_2exp(p, n, 1);
+                mpz_sub_ui(p, n, 1);
+                mpz_fdiv_q_2exp(p, p, 1);
                 if (mpz_probab_prime_p(p, 1) && mpz_probab_prime_p(n, 15) && mpz_probab_prime_p(p, 15)) {
                     printf("2^%i", BITS);
                     for (int bit = MAXTERMS; bit >= 0; --bit) {
